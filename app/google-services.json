@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730105731643",
+    "project_id": "tidbooktimer",
+    "storage_bucket": "tidbooktimer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730105731643:android:5d901e4812de566de85a1e",
+        "android_client_info": {
+          "package_name": "com.sample.tidbooktimer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAF9dd1EZly65OENy8h1xjiTRRaz4f-hG0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

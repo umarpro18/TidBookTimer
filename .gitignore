@@ -1,0 +1,51 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Gradle
+.gradle/
+build/
+*/build/
+!gradle-wrapper.jar
+
+# Gradle cache and lock files
+**/*.lock
+**/*.bin
+*.lock
+*.bin
+
+# Local configuration
+
+# Android Studio / IntelliJ
+.idea/
+*.ipr
+*.iws
+out/
+
+# Logs
+*.log
+
+# OS generated files
+Thumbs.db
+
+# Generated launcher icons
+app/src/main/res/mipmap-*/ic_launcher.*
+app/src/main/res/mipmap-*/ic_launcher_round.*
+app/src/main/res/mipmap-*/ic_launcher_foreground.*
+
+# Other generated resources
+captures/
+.externalNativeBuild/
+.cxx/
