@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,46 +38,46 @@ import androidx.navigation.compose.rememberNavController
 import com.sample.tidbooktimer.MyAppRoute
 import com.sample.tidbooktimer.R
 
-
 @Composable
-fun SignInScreen(navController: NavController) {
-    val viewModel: SignInViewModel = hiltViewModel<SignInViewModel>()
+fun SignUpScreen(navController: NavController) {
 
-    val context = LocalContext.current
+    val viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel>()
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     var isEmailError by remember { mutableStateOf(false) }
     var isPasswordError by remember { mutableStateOf(false) }
 
-    val uiState = viewModel.signInUiState.collectAsStateWithLifecycle()
-    val isLoading = uiState.value == SignInState.Loading
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+    val isLoading = uiState.value == SignUpUiState.Loading
 
     LaunchedEffect(uiState.value) {
         when (uiState.value) {
-            is SignInState.Error -> {
-                android.widget.Toast.makeText(
-                    context,
-                    (uiState.value as SignInState.Error).message,
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
-            }
-
-            is SignInState.Success -> {
+            is SignUpUiState.Success -> {
                 navController.navigate(MyAppRoute.HomeRoute) {
                     popUpTo(MyAppRoute.SignInRoute) { inclusive = true }
                 }
             }
 
-            SignInState.Idle, SignInState.Loading -> {
-                // No action needed
+            is SignUpUiState.Error -> {
+                val errorMessage = (uiState.value as SignUpUiState.Error).message
+                android.widget.Toast.makeText(
+                    context,
+                    errorMessage,
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
             }
+
+            else -> {}
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center,
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = androidx.compose.ui.Alignment.Center
     ) {
         Image(
             painter = androidx.compose.ui.res.painterResource(com.sample.tidbooktimer.R.drawable.ic_background),
@@ -91,17 +89,35 @@ fun SignInScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp, end = 24.dp, top = 120.dp, bottom = 24.dp),
+                .padding(24.dp),
             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.size(80.dp))
             Text(
-                stringResource(R.string.welcome),
+                stringResource(R.string.signup),
                 color = androidx.compose.ui.graphics.Color.Magenta,
                 fontSize = 40.sp,
                 fontWeight = Bold,
             )
 
-            Spacer(modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.size(24.dp))
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(stringResource(R.string.fullname)) },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.LightGray.copy(alpha = 0.5f),
+                    focusedBorderColor = Color.Magenta,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                    errorLabelColor = MaterialTheme.colorScheme.error
+                ),
+            )
+
+            Spacer(modifier = Modifier.size(24.dp))
 
             OutlinedTextField(
                 value = email,
@@ -133,7 +149,7 @@ fun SignInScreen(navController: NavController) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            Spacer(modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.size(16.dp))
 
             OutlinedTextField(
                 value = password,
@@ -178,7 +194,7 @@ fun SignInScreen(navController: NavController) {
                         isEmailError = !isValidEmail(email)
                         isPasswordError = !isValidPassword(password)
                         if (!isEmailError && !isPasswordError) {
-                            viewModel.signIn(email, password)
+                            viewModel.signUp(name, email, password)
                         }
                     },
                     modifier = Modifier
@@ -190,18 +206,8 @@ fun SignInScreen(navController: NavController) {
                         contentColor = Color.White
                     )
                 ) {
-                    Text(stringResource(R.string.login), fontSize = 18.sp, fontWeight = Bold)
+                    Text(stringResource(R.string.signup), fontSize = 18.sp, fontWeight = Bold)
                 }
-            }
-
-            Spacer(modifier = Modifier.size(16.dp))
-
-            TextButton(onClick = { navController.navigate(MyAppRoute.SignUpRoute) }) {
-                Text(
-                    text = stringResource(R.string.no_account_signup),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
             }
         }
     }
@@ -221,6 +227,6 @@ private fun isValidPassword(password: String): Boolean {
 
 @Preview
 @Composable
-fun SignInScreenPreview() {
-    SignInScreen(navController = rememberNavController())
+fun SignUpScreenPreview() {
+    SignUpScreen(navController = rememberNavController())
 }
