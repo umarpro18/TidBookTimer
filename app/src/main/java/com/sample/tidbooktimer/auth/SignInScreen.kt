@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sample.tidbooktimer.R
+
 
 @Composable
 fun SignInScreen() {
@@ -152,6 +154,16 @@ fun SignInScreen() {
                 )
             ) {
                 Text(stringResource(R.string.login), fontSize = 18.sp, fontWeight = Bold)
+            }
+
+            Spacer(modifier = Modifier.size(16.dp))
+
+            TextButton(onClick = {}) {
+                Text(
+                    text = stringResource(R.string.no_account_signup),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
             }
         }
     }
