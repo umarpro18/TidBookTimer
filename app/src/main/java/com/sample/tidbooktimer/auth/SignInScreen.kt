@@ -65,7 +65,7 @@ fun SignInScreen(navController: NavController) {
             }
 
             is SignInState.Success -> {
-                navController.navigate(MyAppRoute.HomeRoute) {
+                navController.navigate(MyAppRoute.TidBookTimerHomeRoute) {
                     popUpTo(MyAppRoute.SignInRoute) { inclusive = true }
                 }
             }

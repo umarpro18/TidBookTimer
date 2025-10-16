@@ -12,7 +12,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sample.tidbooktimer.auth.SignInScreen
 import com.sample.tidbooktimer.auth.SignUpScreen
-import com.sample.tidbooktimer.tidbookhome.HomeScreen
+import com.sample.tidbooktimer.tidbookhome.TidBookTimerScreen
 
 @Composable
 fun MyAppComposable() {
@@ -47,8 +47,8 @@ fun AppGraph(
         composable<MyAppRoute.SignUpRoute> {
             SignUpScreen(navController = controller)
         }
-        composable<MyAppRoute.HomeRoute> {
-            HomeScreen(navController = controller)
+        composable<MyAppRoute.TidBookTimerHomeRoute> {
+            TidBookTimerScreen(navController = controller)
         }
     }
 }

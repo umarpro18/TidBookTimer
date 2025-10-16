@@ -57,7 +57,7 @@ fun SignUpScreen(navController: NavController) {
     LaunchedEffect(uiState.value) {
         when (uiState.value) {
             is SignUpUiState.Success -> {
-                navController.navigate(MyAppRoute.HomeRoute) {
+                navController.navigate(MyAppRoute.TidBookTimerHomeRoute) {
                     popUpTo(MyAppRoute.SignInRoute) { inclusive = true }
                 }
             }

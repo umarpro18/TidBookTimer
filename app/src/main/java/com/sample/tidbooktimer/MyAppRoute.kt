@@ -11,5 +11,5 @@ sealed class MyAppRoute(val isTopBar: Boolean, val title: String = "") {
     object SignUpRoute : MyAppRoute(isTopBar = false)
 
     @Serializable
-    object HomeRoute : MyAppRoute(isTopBar = true, "TidBook Timer")
+    object TidBookTimerHomeRoute : MyAppRoute(isTopBar = true, "TidBook Timer")
 }
