@@ -212,13 +212,19 @@ private fun TidBookTimerScreenContent(
                                 modifier = Modifier.weight(1f)
                             )
                             Text(
-                                text = "Start Time",
+                                text = "StartTime",
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = "End Time",
+                                text = "EndTime",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Elapsed",
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.End
@@ -250,6 +256,12 @@ private fun TidBookTimerScreenContent(
                                 text = entry.endTime,
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = entry.elapsedTime.toString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.End
                             )
                         }
@@ -275,9 +287,9 @@ fun TidBookTimerScreenPreview() {
         onResume = {},
         getTimerHistoryList = {
             listOf(
-                TimerEntry("2024-06-01", "09:00:00", "10:00:00"),
-                TimerEntry("2024-06-01", "11:00:00", "12:30:00"),
-                TimerEntry("2024-06-02", "14:15:00", "15:45:00")
+                TimerEntry("2024-06-01", "09:00:00", "10:00:00", "3"),
+                TimerEntry("2024-06-01", "11:00:00", "12:30:00", "5"),
+                TimerEntry("2024-06-02", "14:15:00", "15:45:00", "7")
             )
         },
         onLogout = {}

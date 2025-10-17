@@ -1,5 +1,6 @@
 package com.sample.tidbooktimer.tidbookhome
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -78,7 +78,7 @@ class TidBookTimerViewModel @Inject constructor(
     fun stopTimer() {
         _startTime.value?.let { start ->
             val end = LocalDateTime.now()
-            saveEntry(start, end)
+            saveEntry(start, end, elapsedTime.value)
             getTimerHistory()
         }
         _startTime.value = null
@@ -97,7 +97,7 @@ class TidBookTimerViewModel @Inject constructor(
 
                 // Auto-stop at 23:59
                 if (now.isAfter(endOfDay)) {
-                    saveEntry(start, endOfDay)
+                    saveEntry(start, endOfDay, elapsedTime.value)
 
                     val totalElapsed = java.time.Duration.between(start, now).seconds
                     if (totalElapsed < 24 * 3600) {
@@ -114,7 +114,7 @@ class TidBookTimerViewModel @Inject constructor(
 
                 // Safety max 24h
                 if (now.isAfter(start.plusHours(24))) {
-                    saveEntry(start, start.plusHours(24))
+                    saveEntry(start, start.plusHours(24), elapsedTime.value)
                     _startTime.value = null
                     _elapsedTime.value = 0
                     _isRunning.value = false
@@ -124,7 +124,7 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 
-    private fun saveEntry(start: LocalDateTime, end: LocalDateTime) {
+    private fun saveEntry(start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
         viewModelScope.launch {
             if (userId.isNullOrEmpty()) {
                 return@launch // save failed
@@ -133,10 +133,18 @@ class TidBookTimerViewModel @Inject constructor(
             val entry = TimerEntry(
                 date = start.toLocalDate().toString(),
                 startTime = start.toLocalTime().format(formatter),
-                endTime = end.toLocalTime().format(formatter)
+                endTime = end.toLocalTime().format(formatter),
+                elapsedTime = formatElapsedTime(elapsedTime)
             )
             timerRef.push().setValue(entry)
         }
+    }
+
+    private fun formatElapsedTime(seconds: Long): String {
+        val hours = seconds / 3600
+        val minutes = (seconds % 3600) / 60
+        val secs = seconds % 60
+        return String.format("%02d:%02d:%02d", hours, minutes, secs)
     }
 
     private fun getTimerHistory() {
@@ -149,9 +157,15 @@ class TidBookTimerViewModel @Inject constructor(
 
             try {
                 val snapshot = timerRef.get().await()
+                Log.d("umarNew TidBookTimerViewModel", "Fetched timer history: ${snapshot.value}")
                 val list = snapshot.children.mapNotNull {
+                    Log.d("umarNew TidBookTimerViewModel", "Fetched timer history: ${it.value}")
                     it.getValue(TimerEntry::class.java)
                 }
+                Log.d(
+                    "umarNew TidBookTimerViewModel",
+                    "Fetched timer history: emptyList=${list.isEmpty()}"
+                )
                 _timerHistoryList.value = list
             } catch (e: Exception) {
                 _timerHistoryList.value = emptyList()
@@ -169,27 +183,6 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 
-    fun getTimerList(): List<TimerEntry> {
-        val today = LocalDate.now()
-        return listOf(
-            TimerEntry(
-                date = today.minusDays(2).toString(),
-                startTime = "09:00:00",
-                endTime = "10:30:00"
-            ),
-            TimerEntry(
-                date = today.minusDays(1).toString(),
-                startTime = "11:00:00",
-                endTime = "12:15:00"
-            ),
-            TimerEntry(
-                date = today.toString(),
-                startTime = "13:00:00",
-                endTime = "14:45:00"
-            )
-        )
-    }
-
     fun logout() {
         viewModelScope.launch {
             sessionManager.logout()
@@ -200,5 +193,6 @@ class TidBookTimerViewModel @Inject constructor(
 data class TimerEntry(
     val date: String = "",
     val startTime: String = "",
-    val endTime: String = ""
+    val endTime: String = "",
+    val elapsedTime: String = ""
 )
