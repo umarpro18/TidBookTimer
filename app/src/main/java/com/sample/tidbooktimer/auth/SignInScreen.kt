@@ -35,16 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.sample.tidbooktimer.MyAppRoute
 import com.sample.tidbooktimer.R
 
 
 @Composable
-fun SignInScreen(navController: NavController) {
-    val viewModel: SignInViewModel = hiltViewModel<SignInViewModel>()
-
+fun SignInScreen(
+    viewModel: SignInViewModel,
+    onNavigateToSignUp: () -> Unit,
+    onSignInSuccess: () -> Unit
+) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -65,9 +64,7 @@ fun SignInScreen(navController: NavController) {
             }
 
             is SignInState.Success -> {
-                navController.navigate(MyAppRoute.TidBookTimerHomeRoute) {
-                    popUpTo(MyAppRoute.SignInRoute) { inclusive = true }
-                }
+                onSignInSuccess()
             }
 
             SignInState.Idle, SignInState.Loading -> {
@@ -196,7 +193,7 @@ fun SignInScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.size(16.dp))
 
-            TextButton(onClick = { navController.navigate(MyAppRoute.SignUpRoute) }) {
+            TextButton(onClick = { onNavigateToSignUp() }) {
                 Text(
                     text = stringResource(R.string.no_account_signup),
                     color = Color.Gray,
@@ -222,5 +219,7 @@ private fun isValidPassword(password: String): Boolean {
 @Preview
 @Composable
 fun SignInScreenPreview() {
-    SignInScreen(navController = rememberNavController())
+    SignInScreen(
+        viewModel = hiltViewModel(),
+        onNavigateToSignUp = {}, onSignInSuccess = {})
 }

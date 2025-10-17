@@ -28,10 +28,7 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import com.sample.tidbooktimer.MyAppRoute
 import com.sample.tidbooktimer.R
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -40,8 +37,8 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun TidBookTimerScreen(
-    navController: NavController,
-    timerViewModel: TidBookTimerViewModel = hiltViewModel<TidBookTimerViewModel>()
+    timerViewModel: TidBookTimerViewModel,
+    onLogOut: () -> Unit
 ) {
     val startTime = timerViewModel.startTime.collectAsStateWithLifecycle()
     val elapsedTime = timerViewModel.elapsedTime.collectAsStateWithLifecycle()
@@ -66,9 +63,7 @@ fun TidBookTimerScreen(
         getTimerHistoryList = { timerHistoryList.value },
         onLogout = {
             timerViewModel.logout()
-            navController.navigate(MyAppRoute.SignInRoute) {
-                popUpTo(MyAppRoute.TidBookTimerHomeRoute) { inclusive = true }
-            }
+            onLogOut()
         }
     )
 }
@@ -99,7 +94,7 @@ private fun TidBookTimerScreenContent(
         TextButton(
             onClick = onLogout, modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(8.dp)
+                .padding(10.dp)
         ) {
             Text(
                 text = stringResource(R.string.logout),
@@ -111,7 +106,7 @@ private fun TidBookTimerScreenContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 64.dp, bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {

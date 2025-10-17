@@ -10,26 +10,22 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.sample.tidbooktimer.auth.SignInScreen
+import com.sample.tidbooktimer.auth.SignInViewModel
 import com.sample.tidbooktimer.auth.SignUpScreen
+import com.sample.tidbooktimer.auth.SignUpViewModel
 import com.sample.tidbooktimer.tidbookhome.TidBookTimerScreen
+import com.sample.tidbooktimer.tidbookhome.TidBookTimerViewModel
 
 @Composable
 fun MyAppComposable() {
-    val navController = rememberNavController()
     val viewModel: MainActivityViewModel = hiltViewModel<MainActivityViewModel>()
     Scaffold(
-        topBar = {
-            /*val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
-            if (currentRoute != MyAppRoute.SignInRoute && currentRoute != MyAppRoute.SignUpRoute) {
-                MyAppTopBar(navController = navController)
-            }*/
-        },
+        topBar = {},
         content = { padding ->
             AppGraph(
                 modifier = Modifier.padding(padding),
-                navController,
                 isUserLoggedIn = viewModel.isUserLogged.collectAsStateWithLifecycle().value
             )
         }
@@ -44,24 +40,55 @@ fun AppGraph(
 ) {
     // Determine start destination based on whether the user is logged in
     val startDestination = if (isUserLoggedIn) {
-        MyAppRoute.TidBookTimerHomeRoute
+        MyAppRoute.TidBookTimerHomeGraphRoute
     } else {
-        MyAppRoute.SignInRoute
+        MyAppRoute.AuthGraphRoute
     }
 
-    NavHost(
-        modifier = modifier,
-        navController = controller,
-        startDestination = startDestination
-    ) {
-        composable<MyAppRoute.SignInRoute> {
-            SignInScreen(navController = controller)
+    NavHost(navController = controller, startDestination = startDestination) {
+        navigation<MyAppRoute.AuthGraphRoute>(
+            startDestination = MyAppRoute.SignInRoute
+        ) {
+            composable<MyAppRoute.SignInRoute> {
+                val viewModel: SignInViewModel = hiltViewModel<SignInViewModel>()
+                SignInScreen(
+                    viewModel,
+                    onNavigateToSignUp = { controller.navigate(MyAppRoute.SignUpRoute) },
+                    onSignInSuccess = {
+                        controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                            popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable<MyAppRoute.SignUpRoute> {
+                val viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel>()
+                SignUpScreen(viewModel, onSignUpSuccess = {
+                    controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                        popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
+                    }
+                }, onSignInClicked = { controller.popBackStack() })
+            }
         }
-        composable<MyAppRoute.SignUpRoute> {
-            SignUpScreen(navController = controller)
+
+        navigation<MyAppRoute.TidBookTimerHomeGraphRoute>(
+            startDestination = MyAppRoute.TidBookTimerHomeRoute,
+        ) {
+            composable<MyAppRoute.TidBookTimerHomeRoute> {
+                val viewModel: TidBookTimerViewModel = hiltViewModel<TidBookTimerViewModel>()
+                TidBookTimerScreen(
+                    viewModel,
+                    onLogOut = {
+                        controller.navigate(MyAppRoute.AuthGraphRoute) {
+                            popUpTo(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                                inclusive = true
+                            }
+                        }
+                    })
+            }
         }
-        composable<MyAppRoute.TidBookTimerHomeRoute> {
-            TidBookTimerScreen(navController = controller)
-        }
+
     }
+
 }

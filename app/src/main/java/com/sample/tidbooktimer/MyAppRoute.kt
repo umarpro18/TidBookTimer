@@ -12,4 +12,10 @@ sealed class MyAppRoute(val isTopBar: Boolean, val title: String = "") {
 
     @Serializable
     object TidBookTimerHomeRoute : MyAppRoute(isTopBar = true, "TidBook Timer")
+
+    @Serializable
+    object AuthGraphRoute : MyAppRoute(isTopBar = false)
+
+    @Serializable
+    object TidBookTimerHomeGraphRoute : MyAppRoute(isTopBar = true, "TidBook Timer")
 }
