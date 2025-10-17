@@ -65,10 +65,9 @@ fun TidBookTimerScreen(
         onResume = { timerViewModel.resumeTimer() },
         getTimerHistoryList = { timerHistoryList.value },
         onLogout = {
-            timerViewModel.logout {
-                navController.navigate("sign_in") {
-                    popUpTo(MyAppRoute.TidBookTimerHomeRoute) { inclusive = true }
-                }
+            timerViewModel.logout()
+            navController.navigate(MyAppRoute.SignInRoute) {
+                popUpTo(MyAppRoute.TidBookTimerHomeRoute) { inclusive = true }
             }
         }
     )
@@ -98,7 +97,7 @@ private fun TidBookTimerScreenContent(
         )
 
         TextButton(
-            onClick = {}, modifier = Modifier
+            onClick = onLogout, modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(8.dp)
         ) {

@@ -190,10 +190,9 @@ class TidBookTimerViewModel @Inject constructor(
         )
     }
 
-    fun logout(onComplete: () -> Unit) {
+    fun logout() {
         viewModelScope.launch {
             sessionManager.logout()
-            onComplete()
         }
     }
 }
