@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sample.tidbooktimer.auth.SignInScreen
 import com.sample.tidbooktimer.auth.SignUpScreen
@@ -17,6 +17,7 @@ import com.sample.tidbooktimer.tidbookhome.TidBookTimerScreen
 @Composable
 fun MyAppComposable() {
     val navController = rememberNavController()
+    val viewModel: MainActivityViewModel = hiltViewModel<MainActivityViewModel>()
     Scaffold(
         topBar = {
             /*val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -26,7 +27,11 @@ fun MyAppComposable() {
             }*/
         },
         content = { padding ->
-            AppGraph(modifier = Modifier.padding(padding), navController)
+            AppGraph(
+                modifier = Modifier.padding(padding),
+                navController,
+                isUserLoggedIn = viewModel.isUserLogged.collectAsStateWithLifecycle().value
+            )
         }
     )
 }
@@ -34,12 +39,20 @@ fun MyAppComposable() {
 @Composable
 fun AppGraph(
     modifier: Modifier = Modifier,
-    controller: NavHostController = rememberNavController()
+    controller: NavHostController = rememberNavController(),
+    isUserLoggedIn: Boolean
 ) {
+    // Determine start destination based on whether the user is logged in
+    val startDestination = if (isUserLoggedIn) {
+        MyAppRoute.TidBookTimerHomeRoute
+    } else {
+        MyAppRoute.SignInRoute
+    }
+
     NavHost(
         modifier = modifier,
         navController = controller,
-        startDestination = MyAppRoute.SignInRoute
+        startDestination = startDestination
     ) {
         composable<MyAppRoute.SignInRoute> {
             SignInScreen(navController = controller)

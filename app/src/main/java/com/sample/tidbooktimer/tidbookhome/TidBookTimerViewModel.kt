@@ -5,14 +5,14 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -20,13 +20,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TidBookTimerViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val sessionManager: SessionManager,
+    database: FirebaseDatabase
 ) : ViewModel() {
 
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
-    private val userId: String = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    private val timerRef = FirebaseDatabase.getInstance().getReference("user_timers/$userId")
+    private val userId: String? = sessionManager.currentUserId()
+    private val timerRef = database.getReference("user_timers/$userId")
 
     private val _startTime = MutableStateFlow<LocalDateTime?>(null)
     val startTime = _startTime.asStateFlow()
@@ -37,9 +39,13 @@ class TidBookTimerViewModel @Inject constructor(
     private val _isRunning = MutableStateFlow(false)
     val isRunning = _isRunning.asStateFlow()
 
+    private val _timerHistoryList = MutableStateFlow<List<TimerEntry>>(emptyList())
+    val timerHistoryList = _timerHistoryList.asStateFlow()
+
     init {
         // Restore previous timer if app was killed
         restorePreviousTimer()
+        getTimerHistory()
     }
 
     fun restorePreviousTimer() {
@@ -73,6 +79,7 @@ class TidBookTimerViewModel @Inject constructor(
         _startTime.value?.let { start ->
             val end = LocalDateTime.now()
             saveEntry(start, end)
+            getTimerHistory()
         }
         _startTime.value = null
         _elapsedTime.value = 0
@@ -119,6 +126,9 @@ class TidBookTimerViewModel @Inject constructor(
 
     private fun saveEntry(start: LocalDateTime, end: LocalDateTime) {
         viewModelScope.launch {
+            if (userId.isNullOrEmpty()) {
+                return@launch // save failed
+            }
             val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
             val entry = TimerEntry(
                 date = start.toLocalDate().toString(),
@@ -129,6 +139,26 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 
+    private fun getTimerHistory() {
+        // This function can be expanded to fetch entries from Firebase if needed
+        viewModelScope.launch {
+            if (userId.isNullOrEmpty()) {
+                _timerHistoryList.value = emptyList()
+                return@launch
+            }
+
+            try {
+                val snapshot = timerRef.get().await()
+                val list = snapshot.children.mapNotNull {
+                    it.getValue(TimerEntry::class.java)
+                }
+                _timerHistoryList.value = list
+            } catch (e: Exception) {
+                _timerHistoryList.value = emptyList()
+            }
+        }
+    }
+
     private fun persistState() {
         viewModelScope.launch {
             dataStore.edit { prefs ->
@@ -136,6 +166,34 @@ class TidBookTimerViewModel @Inject constructor(
                 prefs[TimerPreferences.ELAPSED_TIME] = _elapsedTime.value
                 prefs[TimerPreferences.IS_RUNNING] = _isRunning.value
             }
+        }
+    }
+
+    fun getTimerList(): List<TimerEntry> {
+        val today = LocalDate.now()
+        return listOf(
+            TimerEntry(
+                date = today.minusDays(2).toString(),
+                startTime = "09:00:00",
+                endTime = "10:30:00"
+            ),
+            TimerEntry(
+                date = today.minusDays(1).toString(),
+                startTime = "11:00:00",
+                endTime = "12:15:00"
+            ),
+            TimerEntry(
+                date = today.toString(),
+                startTime = "13:00:00",
+                endTime = "14:45:00"
+            )
+        )
+    }
+
+    fun logout(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            sessionManager.logout()
+            onComplete()
         }
     }
 }
