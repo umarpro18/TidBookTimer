@@ -131,7 +131,7 @@ class TidBookTimerViewModel @Inject constructor(
 
             val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
-            val totalDuration = Duration.between(start, end).toMillis()
+            val totalDuration = Duration.between(start, end).toMillis() / 1000
             val totalPausedTime = (totalDuration - elapsedTime).coerceAtLeast(0L)
 
             val entry = TimerEntry(
@@ -163,9 +163,15 @@ class TidBookTimerViewModel @Inject constructor(
 
             try {
                 val snapshot = timerRef.get().await()
-                Log.d("umarNew TidBookTimerViewModel", "Fetched timer history before: ${snapshot.value}")
+                Log.d(
+                    "umarNew TidBookTimerViewModel",
+                    "Fetched timer history before: ${snapshot.value}"
+                )
                 val list = snapshot.children.mapNotNull {
-                    Log.d("umarNew TidBookTimerViewModel", "Fetched timer history after: ${it.value}")
+                    Log.d(
+                        "umarNew TidBookTimerViewModel",
+                        "Fetched timer history after: ${it.value}"
+                    )
                     it.getValue(TimerEntry::class.java)
                 }
                 Log.d(
