@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -126,21 +127,26 @@ class TidBookTimerViewModel @Inject constructor(
 
     private fun saveEntry(start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
         viewModelScope.launch {
-            if (userId.isNullOrEmpty()) {
-                return@launch // save failed
-            }
+            if (userId.isNullOrEmpty()) return@launch
+
             val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+            val totalDuration = Duration.between(start, end).toMillis()
+            val totalPausedTime = (totalDuration - elapsedTime).coerceAtLeast(0L)
+
             val entry = TimerEntry(
                 date = start.toLocalDate().toString(),
                 startTime = start.toLocalTime().format(formatter),
                 endTime = end.toLocalTime().format(formatter),
-                elapsedTime = formatElapsedTime(elapsedTime)
+                elapsedTime = formatElapsedAndPausedTime(elapsedTime),
+                totalPausedTime = formatElapsedAndPausedTime(totalPausedTime)
             )
+
             timerRef.push().setValue(entry)
         }
     }
 
-    private fun formatElapsedTime(seconds: Long): String {
+    private fun formatElapsedAndPausedTime(seconds: Long): String {
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
         val secs = seconds % 60
@@ -157,9 +163,9 @@ class TidBookTimerViewModel @Inject constructor(
 
             try {
                 val snapshot = timerRef.get().await()
-                Log.d("umarNew TidBookTimerViewModel", "Fetched timer history: ${snapshot.value}")
+                Log.d("umarNew TidBookTimerViewModel", "Fetched timer history before: ${snapshot.value}")
                 val list = snapshot.children.mapNotNull {
-                    Log.d("umarNew TidBookTimerViewModel", "Fetched timer history: ${it.value}")
+                    Log.d("umarNew TidBookTimerViewModel", "Fetched timer history after: ${it.value}")
                     it.getValue(TimerEntry::class.java)
                 }
                 Log.d(
@@ -194,5 +200,6 @@ data class TimerEntry(
     val date: String = "",
     val startTime: String = "",
     val endTime: String = "",
-    val elapsedTime: String = ""
+    val elapsedTime: String = "",
+    val totalPausedTime: String = ""
 )
