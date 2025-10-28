@@ -16,12 +16,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -31,7 +28,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sample.tidbooktimer.R
 
@@ -41,14 +37,21 @@ fun SignUpScreen(
     onSignUpSuccess: () -> Unit,
     onSignInClicked: () -> Unit
 ) {
-
     val context = androidx.compose.ui.platform.LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val personalNumber = viewModel.personalNumber.collectAsStateWithLifecycle()
+    val email = viewModel.email.collectAsStateWithLifecycle()
+    val password = viewModel.password.collectAsStateWithLifecycle()
+    val isEmailFieldError = viewModel.isEmailFieldError.collectAsStateWithLifecycle()
+    val isPasswordFieldError = viewModel.isPasswordFieldError.collectAsStateWithLifecycle()
+    val isPersonalNumberFieldError =
+        viewModel.isPersonalNumberFieldError.collectAsStateWithLifecycle()
 
-    var isEmailError by remember { mutableStateOf(false) }
-    var isPasswordError by remember { mutableStateOf(false) }
+    val setPersonalNumber: (String) -> Unit = { viewModel.setPersonalNumber(it) }
+    val setEmail: (String) -> Unit = { viewModel.setEmail(it) }
+    val setPassword: (String) -> Unit = { viewModel.setPassword(it) }
+
+    val onSignUpClicked: (String, String, String) -> Unit =
+        { personalNumber, email, password -> viewModel.signUp(personalNumber, email, password) }
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle()
     val isLoading = uiState.value == SignUpUiState.Loading
@@ -72,6 +75,37 @@ fun SignUpScreen(
         }
     }
 
+    SignUpScreenContent(
+        onSignUpClicked,
+        onSignInClicked,
+        isLoading,
+        personalNumber.value,
+        email.value,
+        password.value,
+        isEmailFieldError.value,
+        isPasswordFieldError.value,
+        isPersonalNumberFieldError.value,
+        setPersonalNumber,
+        setEmail,
+        setPassword,
+    )
+}
+
+@Composable
+fun SignUpScreenContent(
+    onSignUpClicked: (String, String, String) -> Unit,
+    onSignInClicked: () -> Unit,
+    isLoading: Boolean,
+    personalNumber: String,
+    email: String,
+    password: String,
+    isEmailError: Boolean,
+    isPasswordError: Boolean,
+    isPersonalNumberError: Boolean,
+    setPersonalNumber: (String) -> Unit,
+    setEmail: (String) -> Unit,
+    setPassword: (String) -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = androidx.compose.ui.Alignment.Center
@@ -92,7 +126,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.size(80.dp))
             Text(
                 stringResource(R.string.signup),
-                color = androidx.compose.ui.graphics.Color.Magenta,
+                color = Color.Magenta,
                 fontSize = 40.sp,
                 fontWeight = Bold,
             )
@@ -100,9 +134,19 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.size(24.dp))
 
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text(stringResource(R.string.fullname)) },
+                value = personalNumber,
+                onValueChange = { setPersonalNumber(it) },
+                label = { Text(stringResource(R.string.personal_number)) },
+                isError = isPersonalNumberError,
+                supportingText = {
+                    if (isPersonalNumberError) {
+                        Text(
+                            text = stringResource(R.string.invalid_personal_number),
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -120,7 +164,7 @@ fun SignUpScreen(
                 value = email,
                 onValueChange = { input ->
                     if (!input.contains(" ")) {
-                        email = input
+                        setEmail(input)
                     }
                 },
                 label = { Text(stringResource(R.string.email)) },
@@ -152,7 +196,7 @@ fun SignUpScreen(
                 value = password,
                 onValueChange = { input ->
                     if (!input.contains(" ")) {
-                        password = input
+                        setPassword(input)
                     }
                 },
                 label = { Text(stringResource(R.string.password)) },
@@ -188,11 +232,7 @@ fun SignUpScreen(
             } else {
                 Button(
                     onClick = {
-                        isEmailError = !isValidEmail(email)
-                        isPasswordError = !isValidPassword(password)
-                        if (!isEmailError && !isPasswordError) {
-                            viewModel.signUp(name, email, password)
-                        }
+                        onSignUpClicked(personalNumber, email, password)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -206,27 +246,33 @@ fun SignUpScreen(
                     Text(stringResource(R.string.signup), fontSize = 18.sp, fontWeight = Bold)
                 }
             }
+
+            TextButton(onClick = { onSignInClicked() }, modifier = Modifier.padding(top = 16.dp)) {
+                Text(
+                    text = stringResource(R.string.already_signup_goto_sign_in),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
 
-/**
- * Simple email validation helper
- */
-private fun isValidEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-}
-
-/** Simple password validation: at least 6 characters */
-private fun isValidPassword(password: String): Boolean {
-    return password.length >= 6
-}
-
 @Preview
 @Composable
-fun SignUpScreenPreview() {
-    SignUpScreen(
-        viewModel = hiltViewModel<SignUpViewModel>(),
-        onSignUpSuccess = {},
-        onSignInClicked = {})
+fun SignUpScreenContentPreview() {
+    SignUpScreenContent(
+        onSignUpClicked = { _, _, _ -> },
+        onSignInClicked = {},
+        isLoading = false,
+        personalNumber = "",
+        email = "",
+        password = "",
+        isEmailError = false,
+        isPasswordError = false,
+        isPersonalNumberError = false,
+        setPersonalNumber = {},
+        setEmail = {},
+        setPassword = {},
+    )
 }

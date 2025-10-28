@@ -2,41 +2,136 @@ package com.sample.tidbooktimer.auth
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class SignUpViewModel @Inject constructor() : ViewModel() {
+class SignUpViewModel @Inject constructor(
+    val firebaseAuth: FirebaseAuth,
+    val firebaseStore: FirebaseFirestore
+) : ViewModel() {
+
+    private val _personalNumber = MutableStateFlow("")
+    val personalNumber = _personalNumber.asStateFlow()
+
+    private val _email = MutableStateFlow("")
+    val email = _email.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password = _password.asStateFlow()
+
+    private val _isPersonalNumberFieldError = MutableStateFlow(false)
+    val isPersonalNumberFieldError = _isPersonalNumberFieldError.asStateFlow()
+
+    private val _isEmailFieldError = MutableStateFlow(false)
+    val isEmailFieldError = _isEmailFieldError.asStateFlow()
+
+    private val _isPasswordFieldError = MutableStateFlow(false)
+    val isPasswordFieldError = _isPasswordFieldError.asStateFlow()
+
+    fun setPersonalNumber(value: String) {
+        _personalNumber.value = value
+    }
+
+    fun setEmail(value: String) {
+        _email.value = value
+    }
+
+    fun setPassword(value: String) {
+        _password.value = value
+    }
 
     private val _uiState = MutableStateFlow<SignUpUiState>(SignUpUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    fun signUp(name: String, email: String, password: String) {
+    fun signUp(
+        personalNumber: String,
+        email: String,
+        password: String
+    ) {
         _uiState.value = SignUpUiState.Loading
-        FirebaseAuth.getInstance()
-            .createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = FirebaseAuth.getInstance().currentUser
-                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                        .setDisplayName(name)
-                        .build()
-                    user?.updateProfile(profileUpdates)?.addOnCompleteListener { updateTask ->
-                        if (updateTask.isSuccessful) {
-                            _uiState.value = SignUpUiState.Success
+        // Validate the input fields locally
+        _isPersonalNumberFieldError.value = !isValidPersonalNumber(personalNumber)
+        _isEmailFieldError.value = !isValidEmail(email)
+        _isPasswordFieldError.value = !isValidPassword(password)
+        if (_isPersonalNumberFieldError.value || _isEmailFieldError.value || _isPasswordFieldError.value) {
+            _uiState.value = SignUpUiState.Idle
+            return
+        }
+
+        // Step 1: Check if personal number already exists
+        firebaseStore.collection("users")
+            .whereEqualTo("personalNumber", personalNumber)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    // Someone already signed up with this personal number
+                    _uiState.value =
+                        SignUpUiState.Error("Personal number already exists, sign up failed")
+                    return@addOnSuccessListener
+                }
+
+                // Step 2: Proceed with Firebase Auth signup
+                firebaseAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val uid = firebaseAuth.currentUser?.uid
+                            if (uid == null) {
+                                _uiState.value = SignUpUiState.Error("Failed to get user ID")
+                                return@addOnCompleteListener
+                            }
+
+                            // Step 3: Prepare user data
+                            val userData = mapOf(
+                                "personalNumber" to personalNumber,
+                                "createdAt" to FieldValue.serverTimestamp()
+                            )
+
+                            // Step 4: Save user data under /users/{uid}
+                            firebaseStore.collection("users")
+                                .document(uid)
+                                .set(userData)
+                                .addOnSuccessListener {
+                                    _uiState.value = SignUpUiState.Success
+                                    // Navigate to next screen to collect org numbers
+                                }
+                                .addOnFailureListener { e ->
+                                    _uiState.value = SignUpUiState.Error(
+                                        "Failed to save user data: ${e.message}"
+                                    )
+                                }
                         } else {
                             _uiState.value = SignUpUiState.Error(
-                                updateTask.exception?.message ?: "Failed to update profile"
+                                task.exception?.message ?: "Sign-up failed"
                             )
                         }
                     }
-                } else {
-                    _uiState.value =
-                        SignUpUiState.Error(task.exception?.message ?: "Sign-up failed")
-                }
             }
+            .addOnFailureListener { e ->
+                _uiState.value =
+                    SignUpUiState.Error("Failed to check personal number: ${e.message}")
+            }
+    }
+
+    /**
+     * Simple email validation helper
+     */
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    /** Simple password validation: at least 6 characters */
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6
+    }
+
+    /** Simple personal number validation: at least 10 digits */
+    private fun isValidPersonalNumber(personalNumber: String): Boolean {
+        return personalNumber.matches(Regex("^[0-9]{12}$"))
     }
 }
 

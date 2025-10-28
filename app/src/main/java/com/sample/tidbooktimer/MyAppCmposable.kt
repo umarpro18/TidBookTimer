@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.sample.tidbooktimer.auth.SignInScreen
 import com.sample.tidbooktimer.auth.SignInViewModel
 import com.sample.tidbooktimer.auth.SignUpScreen
@@ -62,7 +63,7 @@ fun AppGraph(
                 )
             }
 
-            composable<MyAppRoute.SignUpRoute> {
+            composable<MyAppRoute.SignUpRoute> { backStackEntry ->
                 val viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel>()
                 SignUpScreen(viewModel, onSignUpSuccess = {
                     controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
@@ -88,7 +89,5 @@ fun AppGraph(
                     })
             }
         }
-
     }
-
 }

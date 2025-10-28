@@ -8,14 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class SignInViewModel @Inject constructor() : ViewModel() {
+class SignInViewModel @Inject constructor(val fireBaseAuth: FirebaseAuth) : ViewModel() {
 
     private val _signInUiState = MutableStateFlow<SignInState>(SignInState.Idle)
     val signInUiState = _signInUiState.asStateFlow()
 
     fun signIn(email: String, password: String) {
         _signInUiState.value = SignInState.Loading
-        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+        fireBaseAuth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { result ->
                 if (result.isSuccessful) {
                     // On success

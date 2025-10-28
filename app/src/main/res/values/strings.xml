@@ -4,10 +4,12 @@
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="login">Login</string>
+    <string name="invalid_personal_number">Invalid personal number</string>
     <string name="invalid_email">Invalid email</string>
     <string name="invalid_password">Invalid password</string>
     <string name="no_account_signup">Don\'t have an account? Sign Up</string>
+    <string name="already_signup_goto_sign_in">Already Signed up? Sign In</string>
     <string name="signup">Sign Up</string>
-    <string name="fullname">Name</string>
+    <string name="personal_number">Personal Number</string>
     <string name="logout">Logout\n</string>
 </resources>
