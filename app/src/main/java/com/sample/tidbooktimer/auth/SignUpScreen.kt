@@ -34,7 +34,7 @@ import com.sample.tidbooktimer.R
 @Composable
 fun SignUpScreen(
     viewModel: SignUpViewModel,
-    onSignUpSuccess: () -> Unit,
+    onSignUpSuccess: (String) -> Unit,
     onSignInClicked: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -59,7 +59,7 @@ fun SignUpScreen(
     LaunchedEffect(uiState.value) {
         when (uiState.value) {
             is SignUpUiState.Success -> {
-                onSignUpSuccess()
+                onSignUpSuccess(personalNumber.value)
             }
 
             is SignUpUiState.Error -> {

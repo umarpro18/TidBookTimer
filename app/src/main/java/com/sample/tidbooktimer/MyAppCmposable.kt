@@ -16,6 +16,8 @@ import com.sample.tidbooktimer.auth.SignInScreen
 import com.sample.tidbooktimer.auth.SignInViewModel
 import com.sample.tidbooktimer.auth.SignUpScreen
 import com.sample.tidbooktimer.auth.SignUpViewModel
+import com.sample.tidbooktimer.profile.StoreOrgScreen
+import com.sample.tidbooktimer.profile.StoreOrgViewModel
 import com.sample.tidbooktimer.tidbookhome.TidBookTimerScreen
 import com.sample.tidbooktimer.tidbookhome.TidBookTimerViewModel
 
@@ -65,11 +67,20 @@ fun AppGraph(
 
             composable<MyAppRoute.SignUpRoute> { backStackEntry ->
                 val viewModel: SignUpViewModel = hiltViewModel<SignUpViewModel>()
-                SignUpScreen(viewModel, onSignUpSuccess = {
-                    controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                SignUpScreen(viewModel, onSignUpSuccess = { personalNumber ->
+                    /*controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                        popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
+                    }*/
+                    controller.navigate(MyAppRoute.StoreOrgRoute(personalNumber = personalNumber)) {
                         popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
                     }
                 }, onSignInClicked = { controller.popBackStack() })
+            }
+
+            composable<MyAppRoute.StoreOrgRoute> { backStackEntry ->
+                val viewModel: StoreOrgViewModel = hiltViewModel<StoreOrgViewModel>()
+                val arg = backStackEntry.toRoute<MyAppRoute.StoreOrgRoute>()
+                StoreOrgScreen(viewModel, arg.personalNumber)
             }
         }
 
