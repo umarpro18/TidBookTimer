@@ -80,7 +80,15 @@ fun AppGraph(
             composable<MyAppRoute.StoreOrgRoute> { backStackEntry ->
                 val viewModel: StoreOrgViewModel = hiltViewModel<StoreOrgViewModel>()
                 val arg = backStackEntry.toRoute<MyAppRoute.StoreOrgRoute>()
-                StoreOrgScreen(viewModel, arg.personalNumber)
+                StoreOrgScreen(
+                    viewModel,
+                    arg.personalNumber,
+                    onStoreOrgSuccess = {
+                        controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                            popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
 
