@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.database.FirebaseDatabase
+import com.sample.tidbooktimer.data.model.TimerEntryDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +41,7 @@ class TidBookTimerViewModel @Inject constructor(
     private val _isRunning = MutableStateFlow(false)
     val isRunning = _isRunning.asStateFlow()
 
-    private val _timerHistoryList = MutableStateFlow<List<TimerEntry>>(emptyList())
+    private val _timerHistoryList = MutableStateFlow<List<TimerEntryDataModel>>(emptyList())
     val timerHistoryList = _timerHistoryList.asStateFlow()
 
     init {
@@ -134,7 +135,7 @@ class TidBookTimerViewModel @Inject constructor(
             val totalDuration = Duration.between(start, end).toMillis() / 1000
             val totalPausedTime = (totalDuration - elapsedTime).coerceAtLeast(0L)
 
-            val entry = TimerEntry(
+            val entry = TimerEntryDataModel(
                 date = start.toLocalDate().toString(),
                 startTime = start.toLocalTime().format(formatter),
                 endTime = end.toLocalTime().format(formatter),
@@ -172,7 +173,7 @@ class TidBookTimerViewModel @Inject constructor(
                         "umarNew TidBookTimerViewModel",
                         "Fetched timer history after: ${it.value}"
                     )
-                    it.getValue(TimerEntry::class.java)
+                    it.getValue(TimerEntryDataModel::class.java)
                 }
                 Log.d(
                     "umarNew TidBookTimerViewModel",
@@ -201,11 +202,3 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 }
-
-data class TimerEntry(
-    val date: String = "",
-    val startTime: String = "",
-    val endTime: String = "",
-    val elapsedTime: String = "",
-    val totalPausedTime: String = ""
-)

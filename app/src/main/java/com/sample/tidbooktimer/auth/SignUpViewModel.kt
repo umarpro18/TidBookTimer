@@ -1,9 +1,10 @@
 package com.sample.tidbooktimer.auth
 
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sample.tidbooktimer.data.model.UserDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,9 +87,10 @@ class SignUpViewModel @Inject constructor(
                             }
 
                             // Step 3: Prepare user data
-                            val userData = mapOf(
-                                "personalNumber" to personalNumber,
-                                "createdAt" to FieldValue.serverTimestamp()
+                            val userData = UserDataModel(
+                                personalNumber = personalNumber,
+                                email = email,
+                                createdAt = Timestamp.now()
                             )
 
                             // Step 4: Save user data under /users/{uid}
@@ -96,8 +98,8 @@ class SignUpViewModel @Inject constructor(
                                 .document(uid)
                                 .set(userData)
                                 .addOnSuccessListener {
-                                    _uiState.value = SignUpUiState.Success
                                     // Navigate to next screen to collect org numbers
+                                    _uiState.value = SignUpUiState.Success
                                 }
                                 .addOnFailureListener { e ->
                                     _uiState.value = SignUpUiState.Error(

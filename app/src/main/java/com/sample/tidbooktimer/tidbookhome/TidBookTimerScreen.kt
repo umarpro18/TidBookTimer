@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sample.tidbooktimer.R
+import com.sample.tidbooktimer.data.model.TimerEntryDataModel
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -77,7 +78,7 @@ private fun TidBookTimerScreenContent(
     onStop: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
-    getTimerHistoryList: () -> List<TimerEntry>,
+    getTimerHistoryList: () -> List<TimerEntryDataModel>,
     onLogout: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
@@ -282,9 +283,9 @@ fun TidBookTimerScreenPreview() {
         onResume = {},
         getTimerHistoryList = {
             listOf(
-                TimerEntry("2024-06-01", "09:00:00", "10:00:00", totalPausedTime = "3"),
-                TimerEntry("2024-06-01", "11:00:00", "12:30:00", totalPausedTime = "5"),
-                TimerEntry("2024-06-02", "14:15:00", "15:45:00", totalPausedTime = "7")
+                TimerEntryDataModel(1, "2024-06-01", "09:00:00", "10:00:00", totalPausedTime = "3"),
+                TimerEntryDataModel(2, "2024-06-01", "11:00:00", "12:30:00", totalPausedTime = "5"),
+                TimerEntryDataModel(3, "2024-06-02", "14:15:00", "15:45:00", totalPausedTime = "7")
             )
         },
         onLogout = {}
