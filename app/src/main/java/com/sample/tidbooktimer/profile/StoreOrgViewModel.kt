@@ -1,13 +1,18 @@
 package com.sample.tidbooktimer.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.sample.tidbooktimer.data.model.OrganizationDataModel
+import com.sample.tidbooktimer.data.model.OrganizationDetailModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,54 +52,62 @@ class StoreOrgViewModel @Inject constructor(
         _orgNo4.value = value
     }
 
-    fun storeOrgDetail(
-        personalNumber: String,
-        orgNo1: String? = null,
-        orgNo2: String? = null,
-        orgNo3: String? = null,
-        orgNo4: String? = null,
-    ) {
-        _uiState.value = StoreOrgDetailState.Loading
-
-        // Validate at least one orgNo
-        val orgNumbers = listOf(orgNo1, orgNo2, orgNo3, orgNo4).filterNot { it.isNullOrBlank() }
-        if (orgNumbers.isEmpty()) {
-            _uiState.value =
-                StoreOrgDetailState.Error("At least one organization number is required")
-            return
+    fun storeOrgDetail(orgIds: List<String?>, orgNames: List<String?>) {
+        viewModelScope.launch {
+            _uiState.value = storeOrgDetailBackground(orgIds, orgNames)
         }
+    }
 
-        val uid = fireBaseAuth.currentUser?.uid
-        if (uid == null) {
-            _uiState.value = StoreOrgDetailState.Error("User not authenticated")
-            return
+    suspend fun storeOrgDetailBackground(
+        orgIds: List<String?>, // Pass up to 4 org IDs
+        orgNames: List<String?> // Corresponding names
+    ): StoreOrgDetailState {
+        return try {
+            val uid = fireBaseAuth.currentUser?.uid
+                ?: return StoreOrgDetailState.Error("User not authenticated")
+
+            // Validate at least one orgId
+            if (orgIds.isEmpty() || orgNames.isEmpty()) {
+                return StoreOrgDetailState.Error("At least one organization is required")
+            }
+
+            Log.d("umarNew", "uid and orgIds: $uid, $orgIds")
+            // Build orgDetails map dynamically
+            val orgDetailsMap = mutableMapOf<String, OrganizationDataModel>()
+            for (i in orgIds.indices) {
+                val orgId = orgIds[i]?.trim()
+                // Skip if null or blank
+                if (orgId.isNullOrBlank()) continue
+                val orgName = orgNames.getOrNull(i)?.trim().orEmpty()
+                orgDetailsMap[orgId] = OrganizationDataModel(
+                    orgId = orgId,
+                    orgName = orgName,
+                    timerEntry = emptyList() // Initially empty
+                )
+            }
+
+            val orgData = OrganizationDetailModel(
+                orgDetails = orgDetailsMap,
+            )
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .set(orgData, SetOptions.merge())
+                .await()
+
+            // temp until we add the select org id screen: always pass the 1st element
+            StoreOrgDetailState.Success(SuccessPassBackValue(orgId = orgIds[0] ?: ""))
+        } catch (e: Exception) {
+            StoreOrgDetailState.Error(e.message ?: "Unknown error")
         }
-
-        val userDocRef = fireStore.collection("users").document(uid)
-
-        val orgData = mapOf(
-            "orgDetails" to mapOf(
-                "orgNo1" to orgNo1,
-                "orgNo2" to orgNo2,
-                "orgNo3" to orgNo3,
-                "orgNo4" to orgNo4
-            ),
-            "updatedAt" to FieldValue.serverTimestamp()
-        )
-
-        userDocRef.set(orgData, SetOptions.merge())
-            .addOnSuccessListener {
-                _uiState.value = StoreOrgDetailState.Success
-            }
-            .addOnFailureListener { e ->
-                _uiState.value = StoreOrgDetailState.Error(e.message ?: "Unknown error")
-            }
     }
 }
+
+data class SuccessPassBackValue(val personalNumber: String = "", val orgId: String)
 
 sealed class StoreOrgDetailState() {
     object Idle : StoreOrgDetailState()
     object Loading : StoreOrgDetailState()
-    object Success : StoreOrgDetailState()
+    data class Success(val successValue: SuccessPassBackValue) : StoreOrgDetailState()
     data class Error(val message: String) : StoreOrgDetailState()
 }

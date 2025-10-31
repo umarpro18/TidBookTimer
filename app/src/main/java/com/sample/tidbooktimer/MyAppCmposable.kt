@@ -83,8 +83,8 @@ fun AppGraph(
                 StoreOrgScreen(
                     viewModel,
                     arg.personalNumber,
-                    onStoreOrgSuccess = {
-                        controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
+                    onStoreOrgSuccess = { orgId ->
+                        controller.navigate(MyAppRoute.TidBookTimerHomeRoute("", orgId, "")) {
                             popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
                         }
                     }
@@ -93,12 +93,14 @@ fun AppGraph(
         }
 
         navigation<MyAppRoute.TidBookTimerHomeGraphRoute>(
-            startDestination = MyAppRoute.TidBookTimerHomeRoute,
+            startDestination = MyAppRoute.TidBookTimerHomeRoute(),
         ) {
-            composable<MyAppRoute.TidBookTimerHomeRoute> {
+            composable<MyAppRoute.TidBookTimerHomeRoute> { backStackEntry ->
+                val args = backStackEntry.toRoute<MyAppRoute.TidBookTimerHomeRoute>()
                 val viewModel: TidBookTimerViewModel = hiltViewModel<TidBookTimerViewModel>()
                 TidBookTimerScreen(
                     viewModel,
+                    args.personalNumber, args.orgId, args.orgName,
                     onLogOut = {
                         controller.navigate(MyAppRoute.AuthGraphRoute) {
                             popUpTo(MyAppRoute.TidBookTimerHomeGraphRoute) {

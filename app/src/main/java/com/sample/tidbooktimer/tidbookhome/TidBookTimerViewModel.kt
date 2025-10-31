@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sample.tidbooktimer.data.model.TimerEntryDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +26,15 @@ import javax.inject.Inject
 class TidBookTimerViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val sessionManager: SessionManager,
-    database: FirebaseDatabase
+    database: FirebaseDatabase,
+    private val fireStore: FirebaseFirestore
 ) : ViewModel() {
 
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
     private val userId: String? = sessionManager.currentUserId()
+
+    // Old db (real time)
     private val timerRef = database.getReference("user_timers/$userId")
 
     private val _startTime = MutableStateFlow<LocalDateTime?>(null)
@@ -77,10 +82,10 @@ class TidBookTimerViewModel @Inject constructor(
         persistState()
     }
 
-    fun stopTimer() {
+    fun stopTimer(orgId: String) {
         _startTime.value?.let { start ->
             val end = LocalDateTime.now()
-            saveEntry(start, end, elapsedTime.value)
+            saveEntry(orgId, start, end, elapsedTime.value)
             getTimerHistory()
         }
         _startTime.value = null
@@ -89,7 +94,7 @@ class TidBookTimerViewModel @Inject constructor(
         persistState()
     }
 
-    fun tick() {
+    fun tick(oriId: String) {
         if (_isRunning.value) {
             _elapsedTime.value += 1
 
@@ -99,7 +104,7 @@ class TidBookTimerViewModel @Inject constructor(
 
                 // Auto-stop at 23:59
                 if (now.isAfter(endOfDay)) {
-                    saveEntry(start, endOfDay, elapsedTime.value)
+                    saveEntry(oriId, start, endOfDay, elapsedTime.value)
 
                     val totalElapsed = java.time.Duration.between(start, now).seconds
                     if (totalElapsed < 24 * 3600) {
@@ -116,7 +121,7 @@ class TidBookTimerViewModel @Inject constructor(
 
                 // Safety max 24h
                 if (now.isAfter(start.plusHours(24))) {
-                    saveEntry(start, start.plusHours(24), elapsedTime.value)
+                    saveEntry(oriId, start, start.plusHours(24), elapsedTime.value)
                     _startTime.value = null
                     _elapsedTime.value = 0
                     _isRunning.value = false
@@ -126,7 +131,7 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 
-    private fun saveEntry(start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
+    private fun saveEntryRealTimeDB(start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
         viewModelScope.launch {
             if (userId.isNullOrEmpty()) return@launch
 
@@ -142,8 +147,35 @@ class TidBookTimerViewModel @Inject constructor(
                 elapsedTime = formatElapsedAndPausedTime(elapsedTime),
                 totalPausedTime = formatElapsedAndPausedTime(totalPausedTime)
             )
-
+            // old db (real time)
             timerRef.push().setValue(entry)
+        }
+    }
+
+    private fun saveEntry(orgId: String, start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
+        viewModelScope.launch {
+            if (userId.isNullOrEmpty()) return@launch
+            val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+            val totalDuration = Duration.between(start, end).toMillis() / 1000
+            val totalPausedTime = (totalDuration - elapsedTime).coerceAtLeast(0L)
+
+            val entry = TimerEntryDataModel(
+                entryId = (System.currentTimeMillis() % 100000).toInt(), // Simple unique ID
+                date = start.toLocalDate().toString(),
+                startTime = start.toLocalTime().format(formatter),
+                endTime = end.toLocalTime().format(formatter),
+                elapsedTime = formatElapsedAndPausedTime(elapsedTime),
+                totalPausedTime = formatElapsedAndPausedTime(totalPausedTime)
+            )
+
+            try {
+                    fireStore.collection("users")
+                    .document(userId)
+                    .update("orgDetails.$orgId.timerEntries", FieldValue.arrayUnion(entry))
+                    .await()
+            } catch (e: Exception) {
+                Log.e("umarNew TidBookTimerViewModel", "Error saving timer entry: $e")
+            }
         }
     }
 

@@ -34,7 +34,7 @@ import com.sample.tidbooktimer.R
 fun StoreOrgScreen(
     viewModel: StoreOrgViewModel,
     personalNumber: String,
-    onStoreOrgSuccess: () -> Unit,
+    onStoreOrgSuccess: (String) -> Unit,
 ) {
     val orgNo1 = viewModel.orgNo1.collectAsStateWithLifecycle()
     val orgNo2 = viewModel.orgNo2.collectAsStateWithLifecycle()
@@ -54,12 +54,17 @@ fun StoreOrgScreen(
 
     val onStoreOrgDetailClicked: (String, String?, String?, String?, String?) -> Unit =
         { personalNumber, orgNo1, orgNo2, orgNo3, orgNo4 ->
-            viewModel.storeOrgDetail(personalNumber, orgNo1, orgNo2, orgNo3, orgNo4)
+            //viewModel.storeOrgDetail(personalNumber, orgNo1, orgNo2, orgNo3, orgNo4)
+            val orgIdList = listOf(orgNo1, orgNo2, orgNo3, orgNo4)
+            val orgNames = listOf("orgNo1", "orgNo2", "orgNo3", "orgNo4")
+            viewModel.storeOrgDetail(orgIdList, orgNames)
         }
 
     LaunchedEffect(uiState.value) {
         when (uiState.value) {
-            is StoreOrgDetailState.Success -> onStoreOrgSuccess()
+            is StoreOrgDetailState.Success -> {
+                onStoreOrgSuccess((uiState.value as StoreOrgDetailState.Success).successValue.orgId)
+            }
             is StoreOrgDetailState.Error -> {
                 android.widget.Toast.makeText(
                     context,

@@ -1,5 +1,6 @@
 package com.sample.tidbooktimer.tidbookhome
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TidBookTimerScreen(
     timerViewModel: TidBookTimerViewModel,
+    personalNumber: String, orgId: String, orgName: String,
     onLogOut: () -> Unit
 ) {
     val startTime = timerViewModel.startTime.collectAsStateWithLifecycle()
@@ -46,10 +48,15 @@ fun TidBookTimerScreen(
     val isRunning = timerViewModel.isRunning.collectAsStateWithLifecycle()
     val timerHistoryList = timerViewModel.timerHistoryList.collectAsStateWithLifecycle()
 
+    Log.d(
+        "umarNew",
+        "TidBookTimerScreen with personalNumber: $personalNumber, orgId: $orgId, orgName: $orgName"
+    )
+
     LaunchedEffect(isRunning) {
         while (true) {
             delay(1000L)
-            timerViewModel.tick()
+            timerViewModel.tick(orgId)
         }
     }
 
@@ -58,7 +65,7 @@ fun TidBookTimerScreen(
         elapsedTime = elapsedTime.value,
         isRunning = isRunning.value,
         onStart = { timerViewModel.startTimer() },
-        onStop = { timerViewModel.stopTimer() },
+        onStop = { timerViewModel.stopTimer(orgId) },
         onPause = { timerViewModel.pauseTimer() },
         onResume = { timerViewModel.resumeTimer() },
         getTimerHistoryList = { timerHistoryList.value },
