@@ -28,9 +28,10 @@ fun SelectOrgScreen(orgNoList: List<String>, onOrgSelected: (String) -> Unit) {
     // Start here
     if (orgNoList.isNotEmpty()) {
         SelectOrgContentScreen(orgNoList, onOrgSelected)
+    } else {
+        EmptyOrgListScreen()
     }
 }
-
 
 @Composable
 fun SelectOrgContentScreen(orgNoList: List<String>, onOrgSelected: (String) -> Unit) {
@@ -80,8 +81,34 @@ fun SelectOrgContentScreen(orgNoList: List<String>, onOrgSelected: (String) -> U
     }
 }
 
+@Composable
+fun EmptyOrgListScreen() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_background),
+            modifier = Modifier.fillMaxSize(), contentDescription = null
+        )
+
+        Text(
+            text = "No org found, Please add org to continue!",
+            fontSize = 24.sp,
+            color = Color.DarkGray,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(start = 32.dp, end = 32.dp)
+        )
+    }
+}
+
 @Preview
 @Composable
 fun SelectOrgScreenPreview() {
     SelectOrgContentScreen(listOf("122", "123", "124"), onOrgSelected = {})
+}
+
+@Preview
+@Composable
+fun EmptyOrgListScreenPreview() {
+    EmptyOrgListScreen()
 }

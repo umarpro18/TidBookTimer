@@ -101,7 +101,7 @@ fun AppGraph(
                 SelectOrgScreen(
                     args.orgNos,
                     onOrgSelected = { orgId ->
-                        controller.navigate(MyAppRoute.TidBookTimerHomeRoute(orgId))
+                        controller.navigate(MyAppRoute.TidBookTimerHomeRoute(orgId = orgId))
                     }
                 )
             }
