@@ -40,7 +40,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TidBookTimerScreen(
     timerViewModel: TidBookTimerViewModel,
-    personalNumber: String, orgId: String, orgName: String,
+    orgId: String, orgName: String,
     onLogOut: () -> Unit
 ) {
     val startTime = timerViewModel.startTime.collectAsStateWithLifecycle()
@@ -50,7 +50,7 @@ fun TidBookTimerScreen(
 
     Log.d(
         "umarNew",
-        "TidBookTimerScreen with personalNumber: $personalNumber, orgId: $orgId, orgName: $orgName"
+        "TidBookTimerScreen with orgId: $orgId, orgName: $orgName"
     )
 
     LaunchedEffect(isRunning) {

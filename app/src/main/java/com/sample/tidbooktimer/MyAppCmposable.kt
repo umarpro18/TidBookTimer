@@ -18,6 +18,7 @@ import com.sample.tidbooktimer.auth.SignUpScreen
 import com.sample.tidbooktimer.auth.SignUpViewModel
 import com.sample.tidbooktimer.profile.StoreOrgScreen
 import com.sample.tidbooktimer.profile.StoreOrgViewModel
+import com.sample.tidbooktimer.tidbookhome.SelectOrgScreen
 import com.sample.tidbooktimer.tidbookhome.TidBookTimerScreen
 import com.sample.tidbooktimer.tidbookhome.TidBookTimerViewModel
 
@@ -83,8 +84,8 @@ fun AppGraph(
                 StoreOrgScreen(
                     viewModel,
                     arg.personalNumber,
-                    onStoreOrgSuccess = { orgId ->
-                        controller.navigate(MyAppRoute.TidBookTimerHomeRoute("", orgId, "")) {
+                    onStoreOrgSuccess = { orgIds ->
+                        controller.navigate(MyAppRoute.SelectOrgRoute(orgIds)) {
                             popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
                         }
                     }
@@ -93,14 +94,23 @@ fun AppGraph(
         }
 
         navigation<MyAppRoute.TidBookTimerHomeGraphRoute>(
-            startDestination = MyAppRoute.TidBookTimerHomeRoute(),
+            startDestination = MyAppRoute.SelectOrgRoute(),
         ) {
+            composable<MyAppRoute.SelectOrgRoute> { backStackEntry ->
+                val args = backStackEntry.toRoute<MyAppRoute.SelectOrgRoute>()
+                SelectOrgScreen(
+                    args.orgNos,
+                    onOrgSelected = { orgId ->
+                        controller.navigate(MyAppRoute.TidBookTimerHomeRoute(orgId))
+                    }
+                )
+            }
+
             composable<MyAppRoute.TidBookTimerHomeRoute> { backStackEntry ->
                 val args = backStackEntry.toRoute<MyAppRoute.TidBookTimerHomeRoute>()
                 val viewModel: TidBookTimerViewModel = hiltViewModel<TidBookTimerViewModel>()
                 TidBookTimerScreen(
-                    viewModel,
-                    args.personalNumber, args.orgId, args.orgName,
+                    viewModel, args.orgId, args.orgName,
                     onLogOut = {
                         controller.navigate(MyAppRoute.AuthGraphRoute) {
                             popUpTo(MyAppRoute.TidBookTimerHomeGraphRoute) {

@@ -12,4 +12,5 @@
     <string name="signup">Sign Up</string>
     <string name="personal_number">Personal Number</string>
     <string name="logout">Logout\n</string>
+    <string name="selectOrg">Select Orgnization</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.sample.tidbooktimer.profile
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -71,7 +70,6 @@ class StoreOrgViewModel @Inject constructor(
                 return StoreOrgDetailState.Error("At least one organization is required")
             }
 
-            Log.d("umarNew", "uid and orgIds: $uid, $orgIds")
             // Build orgDetails map dynamically
             val orgDetailsMap = mutableMapOf<String, OrganizationDataModel>()
             for (i in orgIds.indices) {
@@ -82,28 +80,25 @@ class StoreOrgViewModel @Inject constructor(
                 orgDetailsMap[orgId] = OrganizationDataModel(
                     orgId = orgId,
                     orgName = orgName,
-                    timerEntry = emptyList() // Initially empty
                 )
             }
 
             val orgData = OrganizationDetailModel(
                 orgDetails = orgDetailsMap,
             )
-            FirebaseFirestore.getInstance()
+            fireStore
                 .collection("users")
                 .document(uid)
                 .set(orgData, SetOptions.merge())
                 .await()
-
-            // temp until we add the select org id screen: always pass the 1st element
-            StoreOrgDetailState.Success(SuccessPassBackValue(orgId = orgIds[0] ?: ""))
+            StoreOrgDetailState.Success(SuccessPassBackValue(orgIds = orgIds.filterNotNull()))
         } catch (e: Exception) {
             StoreOrgDetailState.Error(e.message ?: "Unknown error")
         }
     }
 }
 
-data class SuccessPassBackValue(val personalNumber: String = "", val orgId: String)
+data class SuccessPassBackValue(val orgIds: List<String>)
 
 sealed class StoreOrgDetailState() {
     object Idle : StoreOrgDetailState()

@@ -5,7 +5,6 @@ import com.google.firebase.Timestamp
 data class OrganizationDataModel(
     val orgId: String = "",
     val orgName: String = "",
-    val timerEntry: List<TimerEntryDataModel> = emptyList()
 )
 
 data class OrganizationDetailModel(
