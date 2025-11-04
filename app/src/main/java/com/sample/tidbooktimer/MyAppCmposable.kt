@@ -62,7 +62,15 @@ fun AppGraph(
                         controller.navigate(MyAppRoute.TidBookTimerHomeGraphRoute) {
                             popUpTo(MyAppRoute.AuthGraphRoute) { inclusive = true }
                         }
-                    }
+                    },
+                    navigateToStoreOrgScreen = { controller.navigate(MyAppRoute.StoreOrgRoute) },
+                    navigateToSelectOrgScreen = { orgIds ->
+                        controller.navigate(
+                            MyAppRoute.SelectOrgRoute(
+                                orgIds
+                            )
+                        )
+                    },
                 )
             }
 
@@ -94,7 +102,7 @@ fun AppGraph(
         }
 
         navigation<MyAppRoute.TidBookTimerHomeGraphRoute>(
-            startDestination = MyAppRoute.SelectOrgRoute(),
+            startDestination = MyAppRoute.SelectOrgRoute(emptyList()),
         ) {
             composable<MyAppRoute.SelectOrgRoute> { backStackEntry ->
                 val args = backStackEntry.toRoute<MyAppRoute.SelectOrgRoute>()

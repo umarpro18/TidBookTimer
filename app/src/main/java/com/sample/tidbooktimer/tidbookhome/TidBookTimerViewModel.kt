@@ -131,27 +131,6 @@ class TidBookTimerViewModel @Inject constructor(
         }
     }
 
-    private fun saveEntryRealTimeDB(start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
-        viewModelScope.launch {
-            if (userId.isNullOrEmpty()) return@launch
-
-            val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-
-            val totalDuration = Duration.between(start, end).toMillis() / 1000
-            val totalPausedTime = (totalDuration - elapsedTime).coerceAtLeast(0L)
-
-            val entry = TimerEntryDataModel(
-                date = start.toLocalDate().toString(),
-                startTime = start.toLocalTime().format(formatter),
-                endTime = end.toLocalTime().format(formatter),
-                elapsedTime = formatElapsedAndPausedTime(elapsedTime),
-                totalPausedTime = formatElapsedAndPausedTime(totalPausedTime)
-            )
-            // old db (real time)
-            timerRef.push().setValue(entry)
-        }
-    }
-
     private fun saveEntry(orgId: String, start: LocalDateTime, end: LocalDateTime, elapsedTime: Long = 0L) {
         viewModelScope.launch {
             if (userId.isNullOrEmpty()) return@launch
@@ -186,6 +165,7 @@ class TidBookTimerViewModel @Inject constructor(
         return String.format("%02d:%02d:%02d", hours, minutes, secs)
     }
 
+    // Need to change as per new obj
     private fun getTimerHistory() {
         // This function can be expanded to fetch entries from Firebase if needed
         viewModelScope.launch {

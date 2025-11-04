@@ -1,5 +1,6 @@
 package com.sample.tidbooktimer.auth
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +43,9 @@ import com.sample.tidbooktimer.R
 fun SignInScreen(
     viewModel: SignInViewModel,
     onNavigateToSignUp: () -> Unit,
-    onSignInSuccess: () -> Unit
+    onSignInSuccess: () -> Unit,
+    navigateToStoreOrgScreen: () -> Unit,
+    navigateToSelectOrgScreen: (orgIds: List<String>) -> Unit
 ) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
@@ -64,11 +67,27 @@ fun SignInScreen(
             }
 
             is SignInState.Success -> {
-                onSignInSuccess()
+                //onSignInSuccess()
             }
 
             SignInState.Idle, SignInState.Loading -> {
                 // No action needed
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationSignInEvent.collect { event ->
+            when (event) {
+                is NavigationSignInEvent.NavigateToSelectOrgScreen -> {
+                    Log.d("SignInScreen", "NavigateToSelectOrgScreen: ${event.orgIds}")
+                    navigateToSelectOrgScreen(event.orgIds)
+                }
+
+                is NavigationSignInEvent.NavigateToStoreOrgScreen -> {
+                    Log.d("SignInScreen", "NavigateToStoreOrgScreen:")
+                    navigateToStoreOrgScreen()
+                }
             }
         }
     }
@@ -221,5 +240,6 @@ private fun isValidPassword(password: String): Boolean {
 fun SignInScreenPreview() {
     SignInScreen(
         viewModel = hiltViewModel(),
-        onNavigateToSignUp = {}, onSignInSuccess = {})
+        onNavigateToSignUp = {}, onSignInSuccess = {}, navigateToStoreOrgScreen = {}, navigateToSelectOrgScreen = {}
+    )
 }

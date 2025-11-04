@@ -14,7 +14,7 @@ sealed class MyAppRoute(val isTopBar: Boolean, val title: String = "") {
     data class StoreOrgRoute(val personalNumber: String) : MyAppRoute(isTopBar = false, "Store Org")
 
     @Serializable
-    data class SelectOrgRoute(val orgNos: List<String> = emptyList<String>()): MyAppRoute(isTopBar = true, "Select Org")
+    data class SelectOrgRoute(val orgNos: List<String>): MyAppRoute(isTopBar = true, "Select Org")
 
     @Serializable
     data class TidBookTimerHomeRoute(
